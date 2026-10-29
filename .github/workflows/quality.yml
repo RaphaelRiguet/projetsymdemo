@@ -1,4 +1,4 @@
-name: Audit du code
+name: quality du code
 on:
   push:
     branches: 
