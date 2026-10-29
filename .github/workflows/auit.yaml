@@ -1,32 +1,53 @@
-  name:
-  on:
-    push:
-      branches:
-        - main
-  jobs:
+name: Audit du code
+on:
+  push:
+    branches: 
+    - main
+    - develop
+  pull_request:
+    branches:
+        - develop
+
+jobs:
     audit:
-      runs-on: ubuntu-latest
-      steps:
-        - names: recupére le depot
-          uses: actions/checkout@v7
-          name: recupére le cache Composer
-          id: composer-cache
-          run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+        runs-on: ubuntu-latest
+        steps:
+            - name: Récupérer le dépôt
+              uses: actions/checkout@v7
+            - name: Récupérer le cache Composer
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+            
+            - name: Installer PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                php-version: '8.5'
+                extensions: mbstring, intl
 
-        - name: installer PHP
-          uses: shivammathur/setup-php@v2
-          with:
-            php-version: '8.5'
-            extensions: mbstring, intl
+            - name: Mise en cache du Composer
+              uses: actions/cache@v6
+              with:
+                path: ${{ steps.composer-cache.outputs.dir }}
+                key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                restore-keys: ${{ runner.os }}-composer-
 
-          - name: mise en cache des dépendances Composer
-            uses: actions/cache@v6
-            with:
-              path: ${{ steps.composer-cache.outputs.dir }}
-              key: -${{runner.os}}-composer-${{ hashFiles('composer.lock') }}
-              restore-keys: -${{runner.os}}-composer-
-              -name: installer les dependances composer
-                run: composer install --no-progress --no-suggest --prefer-dist
+            - name: Installer les dépendances Composer
+              run: composer install --no-progress --no-interaction --prefer-dist
+            
+            - name: Lancer l'audit de sécurité
+              run: composer audit
 
-                -name: lance composer l'audit de securite
-                  run: composer audit 
+            - name: verification du style avec php cs-fixer
+              run: vendor/bin/php-cs-fixer fix --dry-run --diff
+            - name: analise statique avec phpStan
+              run: vendor /bin/phpstan analyse -c phpstan.dist.neon --noprogress 
+            - name: linter twig 
+              run: bin/console lint:twig templates/
+            - name: linter yaml 
+              run: bin/console lint:yaml config/
+            - name: linter les controleur de services
+              run: bin/console lint:container config/
+            - name: linter les container de services
+              run: bin/console lint:container --no-debug
+            - name: verification des entiter doquerin
+              run: bin/console doctrine:schema:validate 
