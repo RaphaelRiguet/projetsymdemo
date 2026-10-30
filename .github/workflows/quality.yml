@@ -115,3 +115,30 @@ jobs:
           run: php bin/console doctrine:fixtures:load --no-interaction
         - name: Exécuter les tests d'intégration
           run: php bin/phpunit
+        build-push:
+          need: test-integration
+          runs-on: ubuntu-latest
+          steps:
+            - name: Récupérer le dépôt
+              uses: actions/checkout@v7
+            - name: Récupérer le cache
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+            - name:installer PHP
+              uses: shivammathur/setup-php@v2
+              with: .
+                php-version: 8.5
+                extensions: mbstring, intl
+            - name: Loginto dockerhub
+              uses: docker/login-action@v4
+              with:
+                username: ${{ secrets.DOCKER_USERNAME }}
+                password: ${{ secrets.DOCKER_TOKEN }}
+                bluid: bluid and push
+                uses:docker/bluid-push-action@v7
+                with:
+                  context: .
+                  push: true
+              tag: 
+                -{{ secrets.DOCKER_USERNAME }}/sym-demo-ci-cd:latest
+                -{{ secrets.DOCKER_TOKEN }}/sym-demo-ci-cd:${{ github.sha }}
