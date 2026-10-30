@@ -142,17 +142,17 @@ jobs:
             tags: ${{ secrets.DOCKERHUB_USERNAME }}/sym-demo-ci-cd:latest
 
   deploy:
-      runs-on: ubuntu-latest
-      continue-on-error: false
-      steps: 
-        - name: Récupérer le dépôt
-          uses: actions/checkout@v7
-        - name: deployer l'aplication
-          uses: appleboy/ssh-action@v1
-          with:
-            host: ${{ secrets.SSH_HOST}}
-            username: ${{ secrets.SSH_USER }}
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            port: ${{ secrets.SSH_PORT }}
-            script: |
-              mkdir -p riguetapp
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+      - name: Déployer l'application
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            mkdir -p testapp
